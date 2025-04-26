@@ -184,11 +184,11 @@ class EventCfg:
         },
     )
 
+
 @configclass
 class RewardsCfg:
     """Reward terms for the MDP."""
 
-    # TODO
     # Needle approach rewards
     arm_1_to_needle = RewTerm(
         func=mdp.arm_to_needle_distance,
@@ -199,7 +199,7 @@ class RewardsCfg:
             "object_cfg": SceneEntityCfg("object")
         }
     )
-    
+
     arm_2_to_needle = RewTerm(
         func=mdp.arm_to_needle_distance,
         weight=0.1,
@@ -215,52 +215,48 @@ class RewardsCfg:
         func=mdp.needle_height_reward,
         weight=3.0,
         params={
-            "min_height": 0.02,
-            "max_reward": 1.0,
+            "min_height": 0.02,      # Needle must be 2cm above table
+            "max_reward": 1.0,        # Already normalized inside function
             "object_cfg": SceneEntityCfg("object")
         }
     )
 
+    # Holding bonus
     hold_bonus = RewTerm(
-        func   = mdp.hold_bonus,
-        weight = 5.0,                          # 0.02 per step × 50 steps/s = +1 per second
-        params = {
+        func=mdp.hold_bonus,
+        weight=5.0,                      # 5× reward per step
+        params={
             "robot_cfg": SceneEntityCfg("robot_2"),
-            "object_cfg": SceneEntityCfg("object"),
-            "reward_per_step": 0.1,
-        },
-    )
-
-    # one-shot penalty on drop
-    drop_penalty = RewTerm(
-        func   = mdp.drop_penalty,
-        weight = 1.0,                          # keep weight +1; penalty sign is inside fn
-        params = {
-            "robot_cfg": SceneEntityCfg("robot_2"),
-            "object_cfg": SceneEntityCfg("object"),
-            "penalty": -1.0,
-        },
+            "object_cfg": SceneEntityCfg("object")
+        }
     )
 
     hold_bonus2 = RewTerm(
-        func   = mdp.hold_bonus,
-        weight = 5.0,                          # 0.02 per step × 50 steps/s = +1 per second
-        params = {
+        func=mdp.hold_bonus,
+        weight=5.0,
+        params={
             "robot_cfg": SceneEntityCfg("robot_1"),
-            "object_cfg": SceneEntityCfg("object"),
-            "reward_per_step": 0.1,
-        },
+            "object_cfg": SceneEntityCfg("object")
+        }
     )
 
-    # one-shot penalty on drop
+    # Drop penalty
+    drop_penalty = RewTerm(
+        func=mdp.drop_penalty,
+        weight=-1.0,                     # NEGATIVE weight
+        params={
+            "robot_cfg": SceneEntityCfg("robot_2"),
+            "object_cfg": SceneEntityCfg("object")
+        }
+    )
+
     drop_penalty2 = RewTerm(
-        func   = mdp.drop_penalty,
-        weight = 1.0,                          # keep weight +1; penalty sign is inside fn
-        params = {
+        func=mdp.drop_penalty,
+        weight=-1.0,
+        params={
             "robot_cfg": SceneEntityCfg("robot_1"),
-            "object_cfg": SceneEntityCfg("object"),
-            "penalty": -1.0,
-        },
+            "object_cfg": SceneEntityCfg("object")
+        }
     )
 
     # Close proximity bonus
@@ -289,14 +285,13 @@ class RewardsCfg:
         func=mdp.grasp_success,
         weight=10.0,
         params={
-            "min_height": 0.06,
-            "grasp_duration": 1.0,
+            "min_height": 0.06,            # 6cm lifted
+            "grasp_duration": 1.0,          # 1 second holding
             "robot_cfg": SceneEntityCfg("robot_1"),
             "object_cfg": SceneEntityCfg("object")
         }
     )
-    
-    # Grasp success reward
+
     grasp_success2 = RewTerm(
         func=mdp.grasp_success,
         weight=10.0,
@@ -308,36 +303,27 @@ class RewardsCfg:
         }
     )
 
-    # Stability reward
-    #finger_spam = RewTerm(
-    #    func=mdp.finger_toggle,
-    #    weight=-0.002,                     
-    #    params={"asset_cfg": SceneEntityCfg("robot_2")}
-    #)
-
-    #finger_spam = RewTerm(
-    #    func=mdp.finger_toggle,
-    #    weight=-0.002, 
-    #    params={"asset_cfg": SceneEntityCfg("robot_1")}
-    #)
-
-
-    # Action penalties for smoother movements
-    action_rate = RewTerm(func=mdp.action_rate_l2, weight=-0.0001) 
-    
-    '''
-    joint_1_vel = RewTerm(
-        func=mdp.joint_vel_l2,
-        weight=-0.0005,
-        params={"asset_cfg": SceneEntityCfg("robot_1")},
+    # Stability reward (keep needle stable after grasp)
+    needle_stability = RewTerm(
+        func=mdp.needle_stability,
+        weight=0.05,
+        params={
+            "object_cfg": SceneEntityCfg("object")
+        }
     )
 
-    joint_2_vel = RewTerm(
-        func=mdp.joint_vel_l2,
-        weight=-0.0005,
-        params={"asset_cfg": SceneEntityCfg("robot_2")},
+    # Action penalties (to smooth actions)
+    action_rate = RewTerm(
+        func=mdp.action_rate_l2,
+        weight=-0.0001
     )
-    '''
+
+    # Finger toggle penalty (optional - can uncomment later if needed)
+    # finger_spam = RewTerm(
+    #     func=mdp.finger_toggle,
+    #     weight=-0.002,
+    #     params={"asset_cfg": SceneEntityCfg("robot_2")}
+    # )
 
 
 @configclass
@@ -346,9 +332,6 @@ class TerminationsCfg:
 
     time_out = DoneTerm(func=mdp.time_out, time_out=True)
 
-    #object_dropping = DoneTerm(
-    #    func=mdp.root_height_below_minimum, params={"minimum_height": -0.05, "asset_cfg": SceneEntityCfg("object")}
-    #)
     object_dropping = DoneTerm(
         func=mdp.root_height_below_minimum,
         params={"minimum_height": -0.05, "asset_cfg": SceneEntityCfg("object")}
@@ -363,23 +346,13 @@ class TerminationsCfg:
     )
 
 
-
 @configclass
 class CurriculumCfg:
     """Curriculum terms for the MDP."""
-
     action_rate = CurrTerm(
         func=mdp.modify_reward_weight,
         params={"term_name": "action_rate", "weight": -0.001, "num_steps": 10000}
     )
-
-##
-# Environment configuration
-##
-
-# ------------------------------------------------------------------
-# utils/camera.py
-# ------------------------------------------------------------------
 
 @configclass
 class HandoverEnvCfg(ManagerBasedRLEnvCfg):

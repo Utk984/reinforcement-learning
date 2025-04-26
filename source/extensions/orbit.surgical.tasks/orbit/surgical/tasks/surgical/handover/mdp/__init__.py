@@ -7,8 +7,6 @@
 
 from omni.isaac.lab.envs.mdp import *  # noqa: F401, F403
 
-# Import custom reward functions
 from .rewards import *
-
-# Import custom observation functions
 from .observations import *
+from .terminations import *
