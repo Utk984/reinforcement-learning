@@ -90,13 +90,6 @@ def main():
     # create isaac environment
     env = gym.make(args_cli.task, cfg=env_cfg, render_mode="rgb_array" if args_cli.video else None)
     
-    # -------------------------------------
-    # Print available observation options
-    print("\nAvailable Observations in env.mdp:")
-    for obs_name in env.unwrapped.mdp.observation_manager.list_sensors():
-        print(f" - {obs_name}")
-    # -------------------------------------
-
     # wrap for video recording
     if args_cli.video:
         video_kwargs = {

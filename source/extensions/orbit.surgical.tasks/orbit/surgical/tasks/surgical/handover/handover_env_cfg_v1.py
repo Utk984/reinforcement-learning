@@ -124,72 +124,61 @@ class ObservationsCfg:
     @configclass
     class PolicyCfg(ObsGroup):
         """Observations for policy group."""
-
-        # TODO
-        end_dist = ObsTerm(
-            func=mdp.ee_to_needle_ends,
-            params={"robot_cfg": SceneEntityCfg("robot_2"), "object_cfg": SceneEntityCfg("object")}
-        )
-
-        needle_vel = ObsTerm(
-            func=mdp.needle_vel,
-            params={"object_cfg": SceneEntityCfg("object")}
-        )
-
-        # Height of needle (1 value)
-        needle_height = ObsTerm(
-            func=mdp.needle_height,
-            params={"object_cfg": SceneEntityCfg("object")}
-        )   
-
-        # Finger (gripper) joint position: 0=open  1=closed
-        finger_1_state = ObsTerm(
-            func=mdp.finger_state,
-            params={"asset_cfg": SceneEntityCfg("robot_2")}
-        )
-
-        # Relative position observations
-        ee_1_to_needle = ObsTerm(
-            func=mdp.ee_to_needle_relative_pos,
+        
+        # Robot state observations
+        robot_1_joints = ObsTerm(func=mdp.joint_positions, params={"asset_cfg": SceneEntityCfg("robot_1")})
+        robot_2_joints = ObsTerm(func=mdp.joint_positions, params={"asset_cfg": SceneEntityCfg("robot_2")})
+        
+        ee_1_to_object = ObsTerm(
+            func=mdp.ee_to_needle_relative_pos, 
             params={"robot_cfg": SceneEntityCfg("robot_1"), "object_cfg": SceneEntityCfg("object")}
         )
-        ee_2_to_needle = ObsTerm(
-            func=mdp.ee_to_needle_relative_pos,
+        ee_2_to_object = ObsTerm(
+            func=mdp.ee_to_needle_relative_pos, 
             params={"robot_cfg": SceneEntityCfg("robot_2"), "object_cfg": SceneEntityCfg("object")}
         )
-
-        # Last actions
-        joint_positions_1 = ObsTerm(
-            func=mdp.joint_pos,
-            params={"asset_cfg": SceneEntityCfg("robot_1")}
+        
+        # Object state observations
+        object_pose = ObsTerm(func=mdp.object_pose, params={"object_cfg": SceneEntityCfg("object")})
+        object_velocity = ObsTerm(func=mdp.needle_vel, params={"object_cfg": SceneEntityCfg("object")})
+        object_height = ObsTerm(func=mdp.needle_height, params={"object_cfg": SceneEntityCfg("object")})
+        
+        # Relational observations
+        ee_to_ee = ObsTerm(func=mdp.ee_to_ee_relative_pos)
+        ee_1_object_ends = ObsTerm(
+            func=mdp.ee_to_needle_ends, 
+            params={"robot_cfg": SceneEntityCfg("robot_1"), "object_cfg": SceneEntityCfg("object")}
         )
-
-        joint_positions_2 = ObsTerm(
-            func=mdp.joint_pos,
-            params={"asset_cfg": SceneEntityCfg("robot_2")}
+        ee_2_object_ends = ObsTerm(
+            func=mdp.ee_to_needle_ends, 
+            params={"robot_cfg": SceneEntityCfg("robot_2"), "object_cfg": SceneEntityCfg("object")}
         )
-
-        joint_velocities_1 = ObsTerm(
-            func=mdp.joint_vel,
-            params={"asset_cfg": SceneEntityCfg("robot_1")}
+        
+        # Task state observations
+        finger_state_1 = ObsTerm(func=mdp.finger_state, params={"asset_cfg": SceneEntityCfg("robot_1")})
+        finger_state_2 = ObsTerm(func=mdp.finger_state, params={"asset_cfg": SceneEntityCfg("robot_2")})
+        is_grasped_r1 = ObsTerm(
+            func=mdp.is_object_grasped, 
+            params={
+                "robot_cfg": SceneEntityCfg("robot_1"), 
+                "object_cfg": SceneEntityCfg("object"), 
+                "dist_threshold": 0.02
+            }
         )
-
-        joint_velocities_2 = ObsTerm(
-            func=mdp.joint_vel,
-            params={"asset_cfg": SceneEntityCfg("robot_2")}
+        is_grasped_r2 = ObsTerm(
+            func=mdp.is_object_grasped, 
+            params={
+                "robot_cfg": SceneEntityCfg("robot_2"), 
+                "object_cfg": SceneEntityCfg("object"), 
+                "dist_threshold": 0.02
+            }
         )
-
-        last_action = ObsTerm(func=mdp.last_action)
-        needle_position = ObsTerm(
-            func=mdp.root_pos_w,
-            params={"asset_cfg": SceneEntityCfg("object")}
-        )
-        needle_linear_velocity = ObsTerm(
-            func=mdp.root_lin_vel_w,
-            params={"asset_cfg": SceneEntityCfg("object")}
-        )
-
-        #contact_forces = ObsTerm(func=mdp.contact_forces)
+        
+        # Timing information
+        # time_info = ObsTerm(func=mdp.time_remaining)
+        
+        # Previous actions
+        actions = ObsTerm(func=mdp.last_action)
 
         def __post_init__(self):
             self.enable_corruption = True
@@ -215,147 +204,133 @@ class EventCfg:
         },
     )
 
-
 @configclass
 class RewardsCfg:
     """Reward terms for the MDP."""
 
-    # Needle approach rewards
-    arm_1_to_needle = RewTerm(
-        func=mdp.arm_to_needle_distance,
-        weight=0.1,
+    # Reaching rewards
+    robot_1_reach = RewTerm(
+        func=mdp.arm_to_needle_distance, 
         params={
-            "std": 0.1,
-            "robot_cfg": SceneEntityCfg("robot_1"),
+            "std": 0.05, 
+            "robot_cfg": SceneEntityCfg("robot_1"), 
             "object_cfg": SceneEntityCfg("object")
-        }
+        },
+        weight=0.3
     )
-
-    arm_2_to_needle = RewTerm(
-        func=mdp.arm_to_needle_distance,
-        weight=0.1,
+    
+    robot_2_reach = RewTerm(
+        func=mdp.arm_to_needle_distance, 
         params={
-            "std": 0.1,
-            "robot_cfg": SceneEntityCfg("robot_2"),
+            "std": 0.05, 
+            "robot_cfg": SceneEntityCfg("robot_2"), 
             "object_cfg": SceneEntityCfg("object")
-        }
+        },
+        weight=0.3
     )
-
-    # Needle lifting reward
-    needle_lifted = RewTerm(
-        func=mdp.needle_height_reward,
-        weight=3.0,
+    
+    # Grasping rewards
+    robot_1_hold = RewTerm(
+        func=mdp.hold_bonus, 
         params={
-            "min_height": 0.02,      # Needle must be 2cm above table
-            "max_reward": 1.0,        # Already normalized inside function
+            "robot_cfg": SceneEntityCfg("robot_1"), 
             "object_cfg": SceneEntityCfg("object")
-        }
+        },
+        weight=0.5
     )
-
-    # Holding bonus
-    hold_bonus = RewTerm(
-        func=mdp.hold_bonus,
-        weight=5.0,                      # 5× reward per step
+    
+    robot_2_hold = RewTerm(
+        func=mdp.hold_bonus, 
         params={
-            "robot_cfg": SceneEntityCfg("robot_2"),
+            "robot_cfg": SceneEntityCfg("robot_2"), 
             "object_cfg": SceneEntityCfg("object")
-        }
+        },
+        weight=0.5
     )
-
-    hold_bonus2 = RewTerm(
-        func=mdp.hold_bonus,
-        weight=5.0,
+    
+    drop_penalty_r1 = RewTerm(
+        func=mdp.drop_penalty, 
         params={
-            "robot_cfg": SceneEntityCfg("robot_1"),
+            "robot_cfg": SceneEntityCfg("robot_1"), 
             "object_cfg": SceneEntityCfg("object")
-        }
+        },
+        weight=1.0
     )
-
-    # Drop penalty
-    drop_penalty = RewTerm(
-        func=mdp.drop_penalty,
-        weight=-1.0,                     # NEGATIVE weight
+    
+    drop_penalty_r2 = RewTerm(
+        func=mdp.drop_penalty, 
         params={
-            "robot_cfg": SceneEntityCfg("robot_2"),
+            "robot_cfg": SceneEntityCfg("robot_2"), 
             "object_cfg": SceneEntityCfg("object")
-        }
+        },
+        weight=1.0
     )
-
-    drop_penalty2 = RewTerm(
-        func=mdp.drop_penalty,
-        weight=-1.0,
+    
+    # Height rewards
+    height_reward = RewTerm(
+        func=mdp.needle_height_reward, 
         params={
-            "robot_cfg": SceneEntityCfg("robot_1"),
+            "min_height": 0.03, 
+            "max_height": 0.15, 
             "object_cfg": SceneEntityCfg("object")
-        }
+        },
+        weight=0.2
     )
-
-    '''
-    # Close proximity bonus
-    arm_1_proximity_bonus = RewTerm(
-        func=mdp.needle_proximity_bonus,
-        weight=0.01,
+    
+    # Stability rewards
+    object_stability = RewTerm(
+        func=mdp.needle_stability, 
         params={
-            "proximity_threshold": 0.03,
-            "robot_cfg": SceneEntityCfg("robot_1"),
+            "scale": 0.2, 
             "object_cfg": SceneEntityCfg("object")
-        }
+        },
+        weight=0.3
     )
-
-    arm_2_proximity_bonus = RewTerm(
-        func=mdp.needle_proximity_bonus,
-        weight=0.01,
+    
+    # Handover coordination rewards
+    handover_approach = RewTerm(
+        func=mdp.handover_approach, 
         params={
-            "proximity_threshold": 0.03,
-            "robot_cfg": SceneEntityCfg("robot_2"),
-            "object_cfg": SceneEntityCfg("object")
-        }
+            "optimal_distance": 0.04, 
+            "std": 0.02
+        },
+        weight=0.4
     )
-    '''
-
-    # Grasp success reward
-    grasp_success = RewTerm(
-        func=mdp.grasp_success,
-        weight=10.0,
-        params={
-            "min_height": 0.06,            # 6cm lifted
-            "grasp_duration": 1.0,          # 1 second holding
-            "robot_cfg": SceneEntityCfg("robot_1"),
-            "object_cfg": SceneEntityCfg("object")
-        }
+    
+    coordination = RewTerm(
+        func=mdp.coordinated_grasp_timing,
+        weight=0.5
     )
-
-    grasp_success2 = RewTerm(
-        func=mdp.grasp_success,
-        weight=10.0,
-        params={
-            "min_height": 0.06,
-            "grasp_duration": 1.0,
-            "robot_cfg": SceneEntityCfg("robot_2"),
-            "object_cfg": SceneEntityCfg("object")
-        }
+    
+    handover_success = RewTerm(
+        func=mdp.handover_completion, 
+        params={"bonus_scale": 5.0},
+        weight=1.0
     )
-
-    # Stability reward (keep needle stable after grasp)
-    needle_stability = RewTerm(
-        func=mdp.needle_stability,
-        weight=0.05,
-        params={
-            "object_cfg": SceneEntityCfg("object")
-        }
+    
+    # Efficiency rewards
+    movement_efficiency = RewTerm(
+        func=mdp.movement_efficiency, 
+        params={"scale": 0.1},
+        weight=0.2
     )
-
-    smooth_action = RewTerm(func=mdp.action_rate_l2, weight=-1e-3)
-    #small_action = RewTerm(func=mdp.action_l2, weight=-1e-3)
-    #safe_joint_positions = RewTerm(func=mdp.joint_pos_limit_normalized, weight=-0.5)
-    #undesired_contacts = RewTerm(func=mdp.undesired_contacts, weight=-1.0)
-
-
-    # Finger toggle penalty (optional - can uncomment later if needed)
-    finger_spam = RewTerm(
-         func=mdp.finger_toggle,
-         weight=-0.002,
-         params={"asset_cfg": SceneEntityCfg("robot_2")}
+    
+    # Action penalties
+    action_rate = RewTerm(
+        func=mdp.action_rate_l2, 
+        weight=-0.05
+    )
+    
+    finger_toggle_r1 = RewTerm(
+        func=mdp.finger_toggle_penalty, 
+        params={"asset_cfg": SceneEntityCfg("robot_1")},
+        weight=1.0
+    )
+    
+    finger_toggle_r2 = RewTerm(
+        func=mdp.finger_toggle_penalty, 
+        params={"asset_cfg": SceneEntityCfg("robot_2")},
+        weight=1.0
     )
 
 
@@ -363,19 +338,62 @@ class RewardsCfg:
 class TerminationsCfg:
     """Termination terms for the MDP."""
 
-    time_out = DoneTerm(func=mdp.time_out, time_out=True)
-
-    object_dropping = DoneTerm(
-        func=mdp.root_height_below_minimum,
-        params={"minimum_height": -0.05, "asset_cfg": SceneEntityCfg("object")}
+    # Success terminations
+    handover_complete = DoneTerm(
+        func=mdp.handover_complete, 
+        params={"min_duration": 0.5}# ,
+        # success=True
     )
-
-    lifted_success = DoneTerm(
-        func=mdp.lifted_success,
+    
+    object_goal_reached = DoneTerm(
+        func=mdp.object_reached_goal_height, 
         params={
-            "min_height": 0.08,
-            "hold_steps": 200 
+            "min_height": 0.08, 
+            "object_cfg": SceneEntityCfg("object")
+        }#,
+        # success=True
+    )
+    
+    # Failure terminations
+    time_out = DoneTerm(
+        func=mdp.time_out, 
+        time_out=True
+    )
+    
+    object_dropping = DoneTerm(
+        func=mdp.root_height_below_minimum, 
+        params={
+            "minimum_height": -0.05, 
+            "asset_cfg": SceneEntityCfg("object")
         }
+    )
+    
+    object_too_fast = DoneTerm(
+        func=mdp.object_velocity_exceeded, 
+        params={
+            "max_linear_vel": 1.0, 
+            "max_angular_vel": 10.0, 
+            "object_cfg": SceneEntityCfg("object")
+        }
+    )
+    
+    robots_collision = DoneTerm(
+        func=mdp.robots_collision, 
+        params={"min_distance": 0.05}
+    )
+    
+    unstable_object = DoneTerm(
+        func=mdp.object_unstable, 
+        params={
+            "max_angular_vel": 5.0, 
+            "duration": 1.0, 
+            "object_cfg": SceneEntityCfg("object")
+        }
+    )
+    
+    dropped_during_handover = DoneTerm(
+        func=mdp.both_robots_not_holding, 
+        params={"timeout": 1.0}
     )
 
 
@@ -414,3 +432,4 @@ class HandoverEnvCfg(ManagerBasedRLEnvCfg):
         # simulation settings
         self.viewer.eye = (1.25, 0.5, 0.3)
         self.viewer.lookat = (1.25, 0.0, 0.05)
+
