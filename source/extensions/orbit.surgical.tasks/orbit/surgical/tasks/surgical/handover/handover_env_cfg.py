@@ -21,7 +21,8 @@ from omni.isaac.lab.scene import InteractiveSceneCfg
 from omni.isaac.lab.sensors.frame_transformer.frame_transformer_cfg import FrameTransformerCfg
 from omni.isaac.lab.sim.spawners.from_files.from_files_cfg import GroundPlaneCfg, UsdFileCfg
 from omni.isaac.lab.utils import configclass
-
+import inspect
+import time
 from . import mdp
 
 ##
@@ -158,7 +159,37 @@ class ObservationsCfg:
         )
 
         # Last actions
-        actions = ObsTerm(func=mdp.last_action)
+        joint_positions_1 = ObsTerm(
+            func=mdp.joint_pos,
+            params={"asset_cfg": SceneEntityCfg("robot_1")}
+        )
+
+        joint_positions_2 = ObsTerm(
+            func=mdp.joint_pos,
+            params={"asset_cfg": SceneEntityCfg("robot_2")}
+        )
+
+        joint_velocities_1 = ObsTerm(
+            func=mdp.joint_vel,
+            params={"asset_cfg": SceneEntityCfg("robot_1")}
+        )
+
+        joint_velocities_2 = ObsTerm(
+            func=mdp.joint_vel,
+            params={"asset_cfg": SceneEntityCfg("robot_2")}
+        )
+
+        last_action = ObsTerm(func=mdp.last_action)
+        needle_position = ObsTerm(
+            func=mdp.root_pos_w,
+            params={"asset_cfg": SceneEntityCfg("object")}
+        )
+        needle_linear_velocity = ObsTerm(
+            func=mdp.root_lin_vel_w,
+            params={"asset_cfg": SceneEntityCfg("object")}
+        )
+
+        #contact_forces = ObsTerm(func=mdp.contact_forces)
 
         def __post_init__(self):
             self.enable_corruption = True
@@ -259,6 +290,7 @@ class RewardsCfg:
         }
     )
 
+    '''
     # Close proximity bonus
     arm_1_proximity_bonus = RewTerm(
         func=mdp.needle_proximity_bonus,
@@ -279,6 +311,7 @@ class RewardsCfg:
             "object_cfg": SceneEntityCfg("object")
         }
     )
+    '''
 
     # Grasp success reward
     grasp_success = RewTerm(
@@ -312,18 +345,18 @@ class RewardsCfg:
         }
     )
 
-    # Action penalties (to smooth actions)
-    action_rate = RewTerm(
-        func=mdp.action_rate_l2,
-        weight=-0.0001
-    )
+    smooth_action = RewTerm(func=mdp.action_rate_l2, weight=-1e-3)
+    small_action = RewTerm(func=mdp.action_l2, weight=-1e-3)
+    safe_joint_positions = RewTerm(func=mdp.joint_pos_limit_normalized, weight=-0.5)
+    #undesired_contacts = RewTerm(func=mdp.undesired_contacts, weight=-1.0)
+
 
     # Finger toggle penalty (optional - can uncomment later if needed)
-    # finger_spam = RewTerm(
-    #     func=mdp.finger_toggle,
-    #     weight=-0.002,
-    #     params={"asset_cfg": SceneEntityCfg("robot_2")}
-    # )
+    finger_spam = RewTerm(
+         func=mdp.finger_toggle,
+         weight=-0.002,
+         params={"asset_cfg": SceneEntityCfg("robot_2")}
+    )
 
 
 @configclass
@@ -351,7 +384,7 @@ class CurriculumCfg:
     """Curriculum terms for the MDP."""
     action_rate = CurrTerm(
         func=mdp.modify_reward_weight,
-        params={"term_name": "action_rate", "weight": -0.001, "num_steps": 10000}
+        params={"term_name": "action_rate", "weight": -0.01, "num_steps": 10000}
     )
 
 @configclass

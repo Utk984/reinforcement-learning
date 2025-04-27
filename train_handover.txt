@@ -1,0 +1,1 @@
+${IsaacLab_PATH}/isaaclab.sh -p source/standalone/workflows/rsl_rl/train.py     --task Isaac-Handover-Needle-Dual-PSM-v0     --num_envs 32     --max_iterations 1000     --headless     --video --video_length 300 --video_interval 2000
