@@ -35,6 +35,26 @@ gym.register(
     },
     disable_env_checker=True,
 )
+# TESTING SAC
+gym.register(
+    id="Isaac-Handover-Block-Dual-PSM-SAC-v0",
+    entry_point="omni.isaac.lab.envs:ManagerBasedRLEnv",
+    kwargs={
+        "env_cfg_entry_point": joint_pos_env_cfg.BlockHandoverEnvCfg,
+        "rsl_rl_sac_cfg_entry_point": agents.rsl_rl_sac_cfg.HandoverBlockSACRunnerCfg,
+    },
+    disable_env_checker=True,
+)
+# TESTING SAC
+gym.register(
+    id="Isaac-Handover-Block-Dual-PSM-Play-SAC-v0",
+    entry_point="omni.isaac.lab.envs:ManagerBasedRLEnv",
+    kwargs={
+        "env_cfg_entry_point": joint_pos_env_cfg.BlockHandoverEnvCfg_PLAY,
+        "rsl_rl_sac_cfg_entry_point": agents.rsl_rl_sac_cfg.HandoverBlockSACRunnerCfg,
+    },
+    disable_env_checker=True,
+)
 
 ##
 # Inverse Kinematics - Absolute Pose Control
@@ -59,6 +79,26 @@ gym.register(
     },
     disable_env_checker=True,
 )
+# TESTING SAC
+gym.register(
+    id="Isaac-Handover-Block-Dual-PSM-IK-Abs-SAC-v0",
+    entry_point="omni.isaac.lab.envs:ManagerBasedRLEnv",
+    kwargs={
+        "env_cfg_entry_point": ik_abs_env_cfg.BlockHandoverEnvCfg,
+        "rsl_rl_sac_cfg_entry_point": agents.rsl_rl_sac_cfg.HandoverBlockSACRunnerCfg,
+    },
+    disable_env_checker=True,
+)
+# TESTING SAC
+gym.register(
+    id="Isaac-Handover-Block-Dual-PSM-IK-Abs-Play-SAC-v0",
+    entry_point="omni.isaac.lab.envs:ManagerBasedRLEnv",
+    kwargs={
+        "env_cfg_entry_point": ik_abs_env_cfg.BlockHandoverEnvCfg_PLAY,
+        "rsl_rl_sac_cfg_entry_point": agents.rsl_rl_sac_cfg.HandoverBlockSACRunnerCfg,
+    },
+    disable_env_checker=True,
+)
 
 ##
 # Inverse Kinematics - Relative Pose Control
@@ -80,6 +120,26 @@ gym.register(
     kwargs={
         "env_cfg_entry_point": ik_rel_env_cfg.BlockHandoverEnvCfg_PLAY,
         "rsl_rl_cfg_entry_point": agents.rsl_rl_cfg.HandoverBlockPPORunnerCfg,
+    },
+    disable_env_checker=True,
+)
+# TESTING SAC
+gym.register(
+    id="Isaac-Handover-Block-Dual-PSM-IK-Rel-SAC-v0",
+    entry_point="omni.isaac.lab.envs:ManagerBasedRLEnv",
+    kwargs={
+        "env_cfg_entry_point": ik_rel_env_cfg.BlockHandoverEnvCfg,
+        "rsl_rl_sac_cfg_entry_point": agents.rsl_rl_sac_cfg.HandoverBlockSACRunnerCfg,
+    },
+    disable_env_checker=True,
+)
+# TESTING SAC
+gym.register(
+    id="Isaac-Handover-Block-Dual-PSM-IK-Rel-Play-SAC-v0",
+    entry_point="omni.isaac.lab.envs:ManagerBasedRLEnv",
+    kwargs={
+        "env_cfg_entry_point": ik_rel_env_cfg.BlockHandoverEnvCfg_PLAY,
+        "rsl_rl_sac_cfg_entry_point": agents.rsl_rl_sac_cfg.HandoverBlockSACRunnerCfg,
     },
     disable_env_checker=True,
 )

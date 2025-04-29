@@ -290,28 +290,31 @@ class RewardsCfg:
         }
     )
 
-    '''
-    # Close proximity bonus
-    arm_1_proximity_bonus = RewTerm(
-        func=mdp.needle_proximity_bonus,
-        weight=0.01,
+    #alignment_bonus = RewTerm(
+    #    func=mdp.ee_to_needle_orientation_alignment,  # Again, you need to add this helper if missing
+    #    weight=1.0,
+    #    params={
+    #        "robot_cfg": SceneEntityCfg("robot_2"),
+    #        "object_cfg": SceneEntityCfg("object")
+    #    }
+    #)
+
+    # Needle stability (minimize spin)
+    needle_stability = RewTerm(
+        func=mdp.needle_stability,
+        weight=0.05,
         params={
-            "proximity_threshold": 0.03,
-            "robot_cfg": SceneEntityCfg("robot_1"),
             "object_cfg": SceneEntityCfg("object")
         }
     )
 
-    arm_2_proximity_bonus = RewTerm(
-        func=mdp.needle_proximity_bonus,
-        weight=0.01,
+    joint_velocity_smoothness = RewTerm(
+        func=mdp.joint_vel_l2,
+        weight=-0.00005,
         params={
-            "proximity_threshold": 0.03,
-            "robot_cfg": SceneEntityCfg("robot_2"),
-            "object_cfg": SceneEntityCfg("object")
+            "asset_cfg": SceneEntityCfg("robot_2")
         }
     )
-    '''
 
     # Grasp success reward
     grasp_success = RewTerm(
@@ -345,6 +348,16 @@ class RewardsCfg:
         }
     )
 
+    correct_grip = RewTerm(
+    func=mdp.correct_grip_bonus,
+    weight=0.5,  # Moderate reward
+    params={
+        "robot_cfg": SceneEntityCfg("robot_2"),
+        "object_cfg": SceneEntityCfg("object"),
+        "proximity_threshold": 0.01
+        }
+    )
+
     smooth_action = RewTerm(func=mdp.action_rate_l2, weight=-1e-3)
     #small_action = RewTerm(func=mdp.action_l2, weight=-1e-3)
     #safe_joint_positions = RewTerm(func=mdp.joint_pos_limit_normalized, weight=-0.5)
@@ -354,7 +367,7 @@ class RewardsCfg:
     # Finger toggle penalty (optional - can uncomment later if needed)
     finger_spam = RewTerm(
          func=mdp.finger_toggle,
-         weight=-0.002,
+         weight=-0.0002,
          params={"asset_cfg": SceneEntityCfg("robot_2")}
     )
 
@@ -374,18 +387,56 @@ class TerminationsCfg:
         func=mdp.lifted_success,
         params={
             "min_height": 0.08,
-            "hold_steps": 200 
+            "hold_steps": 500 
         }
     )
 
+def modify_termination_params(env, term_name: str, num_steps: int, **new_params):
+    """
+    Modify multiple parameters of a termination term at a specific training step.
+
+    Arguments:
+    """
+    if env.total_steps >= num_steps:
+        term_cfg = env.termination_cfg[term_name]
+        for key, value in new_params.items():
+            term_cfg.params[key] = value
 
 @configclass
 class CurriculumCfg:
     """Curriculum terms for the MDP."""
-    action_rate = CurrTerm(
+
+    # Smoothness increase: strengthen action rate penalty
+    smoother_action_penalty = CurrTerm(
         func=mdp.modify_reward_weight,
-        params={"term_name": "action_rate", "weight": -0.01, "num_steps": 10000}
+        params={
+            "term_name": "smooth_action",
+            "weight": -0.0015,
+            "num_steps": 10_000
+        }
     )
+    
+    smoother_action_penalty = CurrTerm(
+        func=mdp.modify_reward_weight,
+        params={
+            "term_name": "smooth_action",
+            "weight": -0.01,
+            "num_steps": 12_000
+        }
+    )
+
+
+    # Introduce correct grip bonus reward later (optional, advanced)
+    # enable_correct_grip = CurrTerm(
+    #    func=mdp.modify_reward_weight,
+    #    params={
+    #        "term_name": "correct_grip_bonus",
+    #        "weight": 2.0,
+    #        "num_steps": 20_000             # Only after robot starts lifting
+    #    }
+    #)
+
+
 
 @configclass
 class HandoverEnvCfg(ManagerBasedRLEnvCfg):

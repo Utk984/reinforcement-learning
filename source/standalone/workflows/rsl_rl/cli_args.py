@@ -36,6 +36,9 @@ def add_rsl_rl_args(parser: argparse.ArgumentParser):
     arg_group.add_argument(
         "--log_project_name", type=str, default=None, help="Name of the logging project when using wandb or neptune."
     )
+    arg_group.add_argument(
+        "--algorithm", type=str, default="ppo", choices=["ppo", "sac"], help="RL algorithm to use (ppo or sac)."
+    )
 
 
 def parse_rsl_rl_cfg(task_name: str, args_cli: argparse.Namespace) -> RslRlOnPolicyRunnerCfg:
@@ -50,8 +53,14 @@ def parse_rsl_rl_cfg(task_name: str, args_cli: argparse.Namespace) -> RslRlOnPol
     """
     from omni.isaac.lab_tasks.utils.parse_cfg import load_cfg_from_registry
 
+    # select the correct config entry point based on algorithm
+    if hasattr(args_cli, "algorithm") and args_cli.algorithm == "sac":
+        entry_point = "rsl_rl_sac_cfg_entry_point"
+    else:
+        entry_point = "rsl_rl_cfg_entry_point"
+
     # load the default configuration
-    rslrl_cfg: RslRlOnPolicyRunnerCfg = load_cfg_from_registry(task_name, "rsl_rl_cfg_entry_point")
+    rslrl_cfg: RslRlOnPolicyRunnerCfg = load_cfg_from_registry(task_name, entry_point)
 
     # override the default configuration with CLI arguments
     if args_cli.seed is not None:

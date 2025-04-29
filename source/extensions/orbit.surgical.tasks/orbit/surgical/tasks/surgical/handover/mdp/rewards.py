@@ -13,6 +13,21 @@ if TYPE_CHECKING:
     from omni.isaac.lab.envs import ManagerBasedRLEnv
 
 # ------------------------------
+# Quaternion to Rotation Matrix
+# ------------------------------
+def quat_to_matrix(q: torch.Tensor) -> torch.Tensor:
+    x, y, z, w = q.unbind(-1)
+    xx, yy, zz, ww = x*x, y*y, z*z, w*w
+    xy, xz, yz = x*y, x*z, y*z
+    wx, wy, wz = w*x, w*y, w*z
+
+    return torch.stack((
+        ww + xx - yy - zz, 2*(xy - wz), 2*(xz + wy),
+        2*(xy + wz), ww - xx + yy - zz, 2*(yz - wx),
+        2*(xz - wy), 2*(yz + wx), ww - xx - yy + zz
+    ), dim=-1).reshape(q.shape[:-1] + (3, 3))
+
+# ------------------------------
 # Holding State Tracker
 # ------------------------------
 def _update_hold_flags(env: ManagerBasedRLEnv, robot_cfg: SceneEntityCfg, object_cfg: SceneEntityCfg, close_thresh=0.02, lift_thresh=0.06):
@@ -100,4 +115,82 @@ def finger_toggle(env: ManagerBasedRLEnv, asset_cfg: SceneEntityCfg) -> torch.Te
     toggled = (robot.data.joint_pos[:, finger_idx] - robot._prev_finger).abs() > 0.01
     robot._prev_finger.copy_(robot.data.joint_pos[:, finger_idx])
     return toggled.float()
+
+def check_shape(name: str, tensor: torch.Tensor, expected_dim: int = 1):
+    """Debug function to check tensor shape during RL training."""
+    if tensor.dim() != expected_dim:
+        print(f"[DEBUG WARNING] {name} has shape {tensor.shape}, expected {expected_dim}D tensor!")
+    return tensor
+
+
+def arm_to_needle_tip_distance(
+    env: "ManagerBasedRLEnv",
+    robot_cfg: SceneEntityCfg,
+    object_cfg: SceneEntityCfg
+) -> torch.Tensor:
+    """Reward for robot moving its end-effector close to the needle's tip."""
+    ee = env.scene[f"ee_{robot_cfg.name[-1]}_frame"]
+    obj = env.scene[object_cfg.name]
+
+    # Position of EE and needle tip
+    ee_pos = ee.data.target_pos_w[..., 0, :]
+    tip_pos = obj.data.body_state_w[:, 0, :3]  # Assuming first body = needle tip
+
+    # Distance
+    distance = torch.norm(tip_pos - ee_pos, dim=-1)
+
+    # Reward: closer = higher (tanh-normalized)
+    reward = 1.0 - torch.tanh(distance / 0.05)
+    check_shape("ee_to_needle_orientation_alignment", reward)
+    return reward
+
+def ee_to_needle_orientation_alignment(
+    env: "ManagerBasedRLEnv",
+    robot_cfg: SceneEntityCfg,
+    object_cfg: SceneEntityCfg
+) -> torch.Tensor:
+    """Reward for aligning EE's forward axis with needle's longitudinal axis."""
+    ee = env.scene[f"ee_{robot_cfg.name[-1]}_frame"]
+    obj = env.scene[object_cfg.name]
+
+
+    ee_rot = quat_to_matrix(ee.data.target_rot_w[..., 0, :])
+    obj_rot = quat_to_matrix(obj.data.root_quat_w)
+
+    # EE forward (x-axis) and needle direction (z-axis)
+    ee_forward = ee_rot[..., 0, :]
+    needle_axis = obj_rot[..., 2, :]
+
+    # Cosine similarity
+    cos_sim = (ee_forward * needle_axis).sum(dim=-1)
+
+    # Normalize: 1 means perfect alignment, -1 means opposite
+    reward = (cos_sim + 1) / 2.0
+    check_shape("ee_to_needle_orientation_alignment", reward)
+    return reward
+
+def correct_grip_bonus(
+    env: "ManagerBasedRLEnv",
+    robot_cfg: SceneEntityCfg,
+    object_cfg: SceneEntityCfg,
+    proximity_threshold: float = 0.02
+) -> torch.Tensor:
+    """Bonus when gripper correctly closes near the needle tip."""
+    ee = env.scene[f"ee_{robot_cfg.name[-1]}_frame"]
+    obj = env.scene[object_cfg.name]
+    robot = env.scene[robot_cfg.name]
+
+    # EE and needle tip positions
+    ee_pos = ee.data.target_pos_w[..., 0, :]
+    tip_pos = obj.data.body_state_w[:, 0, :3]
+
+    distance = torch.norm(tip_pos - ee_pos, dim=-1)
+
+    # Finger closed?
+    finger_closed = robot.data.joint_pos[:, -1] > 0.5
+
+    # Bonus if close and closed
+    success = (distance < proximity_threshold) & finger_closed
+    check_shape("ee_to_needle_orientation_alignment", success)
+    return success.float()
 
