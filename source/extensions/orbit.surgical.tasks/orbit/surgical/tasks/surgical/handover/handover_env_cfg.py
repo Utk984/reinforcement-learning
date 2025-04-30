@@ -21,6 +21,9 @@ from omni.isaac.lab.scene import InteractiveSceneCfg
 from omni.isaac.lab.sensors.frame_transformer.frame_transformer_cfg import FrameTransformerCfg
 from omni.isaac.lab.sim.spawners.from_files.from_files_cfg import GroundPlaneCfg, UsdFileCfg
 from omni.isaac.lab.utils import configclass
+from omni.isaac.lab.assets import RigidObjectCfg
+from omni.isaac.lab.sim.spawners.from_files.from_files_cfg import UsdFileCfg
+from orbit.surgical.assets import ORBITSURGICAL_ASSETS_DATA_DIR
 import inspect
 import time
 from . import mdp
@@ -53,6 +56,19 @@ class ObjectTableSceneCfg(InteractiveSceneCfg):
         spawn=UsdFileCfg(usd_path=f"{ORBITSURGICAL_ASSETS_DATA_DIR}/Props/Table/table.usd"),
     )
 
+    pass_target = RigidObjectCfg(
+        prim_path="{ENV_REGEX_NS}/PassTarget",
+        spawn=UsdFileCfg(
+            usd_path=f"{ORBITSURGICAL_ASSETS_DATA_DIR}/Props/Surgical_block/block.usd",
+            visible=False,         # hide its mesh
+            scale=(0.01, 0.01, 0.01),
+        ),
+        init_state=RigidObjectCfg.InitialStateCfg(
+            pos=(0.0, 0.0, 0.05),  # 5 cm above the tabletop in that env’s local frame
+        ),
+    )
+
+
     # plane
     plane = AssetBaseCfg(
         prim_path="/World/GroundPlane",
@@ -76,6 +92,7 @@ class ObjectTableSceneCfg(InteractiveSceneCfg):
 class CommandsCfg:
     """Command terms for the MDP."""
 
+     
     ee_1_pose = mdp.UniformPoseCommandCfg(
         asset_name="robot_1",
         body_name=MISSING,  # will be set by agent env cfg
@@ -104,6 +121,7 @@ class CommandsCfg:
             yaw=(0.0, 0.0),
         ),
     )
+    
 
 
 @configclass
@@ -126,9 +144,14 @@ class ObservationsCfg:
         """Observations for policy group."""
 
         # TODO
-        end_dist = ObsTerm(
+        end_dist_2 = ObsTerm(
             func=mdp.ee_to_needle_ends,
             params={"robot_cfg": SceneEntityCfg("robot_2"), "object_cfg": SceneEntityCfg("object")}
+        )
+        
+        end_dist_1 = ObsTerm(
+            func=mdp.ee_to_needle_ends,
+            params={"robot_cfg": SceneEntityCfg("robot_1"), "object_cfg": SceneEntityCfg("object")}
         )
 
         needle_vel = ObsTerm(
@@ -143,7 +166,7 @@ class ObservationsCfg:
         )   
 
         # Finger (gripper) joint position: 0=open  1=closed
-        finger_1_state = ObsTerm(
+        finger_2_state = ObsTerm(
             func=mdp.finger_state,
             params={"asset_cfg": SceneEntityCfg("robot_2")}
         )
@@ -168,6 +191,15 @@ class ObservationsCfg:
             func=mdp.joint_pos,
             params={"asset_cfg": SceneEntityCfg("robot_2")}
         )
+
+        needle_to_cube = ObsTerm(
+        func=mdp.relative_position_world,
+            params={
+                "source_cfg": SceneEntityCfg("object"),
+                "target_cfg": SceneEntityCfg("pass_target"),
+            }
+        )
+
 
         joint_velocities_1 = ObsTerm(
             func=mdp.joint_vel,
@@ -215,161 +247,59 @@ class EventCfg:
         },
     )
 
-
 @configclass
 class RewardsCfg:
     """Reward terms for the MDP."""
 
-    # Needle approach rewards
-    arm_1_to_needle = RewTerm(
-        func=mdp.arm_to_needle_distance,
-        weight=0.1,
-        params={
-            "std": 0.1,
-            "robot_cfg": SceneEntityCfg("robot_1"),
-            "object_cfg": SceneEntityCfg("object")
-        }
-    )
-
-    arm_2_to_needle = RewTerm(
-        func=mdp.arm_to_needle_distance,
-        weight=0.1,
-        params={
-            "std": 0.1,
-            "robot_cfg": SceneEntityCfg("robot_2"),
-            "object_cfg": SceneEntityCfg("object")
-        }
-    )
-
-    # Needle lifting reward
     needle_lifted = RewTerm(
-        func=mdp.needle_height_reward,
+        func=mdp.needle_lift_with_grip,
         weight=3.0,
         params={
-            "min_height": 0.02,      # Needle must be 2cm above table
-            "max_reward": 1.0,        # Already normalized inside function
-            "object_cfg": SceneEntityCfg("object")
-        }
-    )
-
-    # Holding bonus
-    hold_bonus = RewTerm(
-        func=mdp.hold_bonus,
-        weight=5.0,                      # 5× reward per step
-        params={
             "robot_cfg": SceneEntityCfg("robot_2"),
-            "object_cfg": SceneEntityCfg("object")
+            "object_cfg": SceneEntityCfg("object"),
+            "min_height": 0.01,
+            "max_reward": 1.0
         }
     )
 
-    hold_bonus2 = RewTerm(
-        func=mdp.hold_bonus,
-        weight=5.0,
-        params={
-            "robot_cfg": SceneEntityCfg("robot_1"),
-            "object_cfg": SceneEntityCfg("object")
-        }
-    )
-
-    # Drop penalty
-    drop_penalty = RewTerm(
-        func=mdp.drop_penalty,
-        weight=-1.0,                     # NEGATIVE weight
-        params={
-            "robot_cfg": SceneEntityCfg("robot_2"),
-            "object_cfg": SceneEntityCfg("object")
-        }
-    )
-
-    drop_penalty2 = RewTerm(
-        func=mdp.drop_penalty,
-        weight=-1.0,
-        params={
-            "robot_cfg": SceneEntityCfg("robot_1"),
-            "object_cfg": SceneEntityCfg("object")
-        }
-    )
-
-    #alignment_bonus = RewTerm(
-    #    func=mdp.ee_to_needle_orientation_alignment,  # Again, you need to add this helper if missing
-    #    weight=1.0,
-    #    params={
-    #        "robot_cfg": SceneEntityCfg("robot_2"),
-    #        "object_cfg": SceneEntityCfg("object")
-    #    }
-    #)
-
-    # Needle stability (minimize spin)
-    needle_stability = RewTerm(
-        func=mdp.needle_stability,
-        weight=0.05,
-        params={
-            "object_cfg": SceneEntityCfg("object")
-        }
-    )
-
-    joint_velocity_smoothness = RewTerm(
-        func=mdp.joint_vel_l2,
-        weight=-0.00005,
-        params={
-            "asset_cfg": SceneEntityCfg("robot_2")
-        }
-    )
-
-    # Grasp success reward
     grasp_success = RewTerm(
         func=mdp.grasp_success,
-        weight=10.0,
+        weight=3.0,
         params={
-            "min_height": 0.06,            # 6cm lifted
-            "grasp_duration": 1.0,          # 1 second holding
-            "robot_cfg": SceneEntityCfg("robot_1"),
-            "object_cfg": SceneEntityCfg("object")
-        }
-    )
-
-    grasp_success2 = RewTerm(
-        func=mdp.grasp_success,
-        weight=10.0,
-        params={
-            "min_height": 0.06,
+            "min_height": 0.01,
             "grasp_duration": 1.0,
             "robot_cfg": SceneEntityCfg("robot_2"),
             "object_cfg": SceneEntityCfg("object")
         }
     )
 
-    # Stability reward (keep needle stable after grasp)
     needle_stability = RewTerm(
         func=mdp.needle_stability,
-        weight=0.05,
+        weight=0.1,
         params={
             "object_cfg": SceneEntityCfg("object")
         }
     )
 
-    correct_grip = RewTerm(
-    func=mdp.correct_grip_bonus,
-    weight=0.5,  # Moderate reward
-    params={
-        "robot_cfg": SceneEntityCfg("robot_2"),
-        "object_cfg": SceneEntityCfg("object"),
-        "proximity_threshold": 0.01
-        }
+    '''
+    to_cube = RewTerm(
+        func=mdp.needle_to_cube_distance_reward,
+        params={"std": 0.05},   # 5 cm shaping scale
+        weight=10.0,            # tune strength as needed
     )
+    '''
+
+    ee_to_cube = RewTerm(
+            func=mdp.ee_to_cube_distance_reward,
+            params={"std": 0.05},   # ~5cm shaping
+            weight=10.0,            # strong, so this dominates
+    )
+
 
     smooth_action = RewTerm(func=mdp.action_rate_l2, weight=-1e-3)
-    #small_action = RewTerm(func=mdp.action_l2, weight=-1e-3)
+    
     #safe_joint_positions = RewTerm(func=mdp.joint_pos_limit_normalized, weight=-0.5)
     #undesired_contacts = RewTerm(func=mdp.undesired_contacts, weight=-1.0)
-
-
-    # Finger toggle penalty (optional - can uncomment later if needed)
-    finger_spam = RewTerm(
-         func=mdp.finger_toggle,
-         weight=-0.0002,
-         params={"asset_cfg": SceneEntityCfg("robot_2")}
-    )
 
 
 @configclass
@@ -383,6 +313,7 @@ class TerminationsCfg:
         params={"minimum_height": -0.05, "asset_cfg": SceneEntityCfg("object")}
     )
 
+    '''
     lifted_success = DoneTerm(
         func=mdp.lifted_success,
         params={
@@ -390,6 +321,7 @@ class TerminationsCfg:
             "hold_steps": 500 
         }
     )
+    '''
 
 def modify_termination_params(env, term_name: str, num_steps: int, **new_params):
     """
@@ -407,36 +339,15 @@ class CurriculumCfg:
     """Curriculum terms for the MDP."""
 
     # Smoothness increase: strengthen action rate penalty
-    smoother_action_penalty = CurrTerm(
+    smoother_action_penalty_early = CurrTerm(
         func=mdp.modify_reward_weight,
         params={
             "term_name": "smooth_action",
-            "weight": -0.0015,
+            "weight": -0.001,
             "num_steps": 10_000
         }
     )
     
-    smoother_action_penalty = CurrTerm(
-        func=mdp.modify_reward_weight,
-        params={
-            "term_name": "smooth_action",
-            "weight": -0.01,
-            "num_steps": 12_000
-        }
-    )
-
-
-    # Introduce correct grip bonus reward later (optional, advanced)
-    # enable_correct_grip = CurrTerm(
-    #    func=mdp.modify_reward_weight,
-    #    params={
-    #        "term_name": "correct_grip_bonus",
-    #        "weight": 2.0,
-    #        "num_steps": 20_000             # Only after robot starts lifting
-    #    }
-    #)
-
-
 
 @configclass
 class HandoverEnvCfg(ManagerBasedRLEnvCfg):
@@ -463,5 +374,11 @@ class HandoverEnvCfg(ManagerBasedRLEnvCfg):
         self.sim.dt = 0.01  # 100Hz
 
         # simulation settings
+        # self.viewer.eye = (1.25, 0.5, 0.7)
         self.viewer.eye = (1.25, 0.5, 0.3)
         self.viewer.lookat = (1.25, 0.0, 0.05)
+        # self.viewer.eye = (1.25, -0.1, 0.2)
+        # self.viewer.lookat = (1.25, 0.0, 0.05)
+
+        # self.viewer.eye = (0.0, 0.5, 0.2)
+        # self.viewer.lookat = (0.0, 0.0, 0.05)
