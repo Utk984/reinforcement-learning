@@ -27,11 +27,11 @@ ${IsaacLab_PATH}/isaaclab.sh -p source/standalone/workflows/rsl_rl/train.py     
 Here are the key components of our implementation:
 - `source/needle_handover/train.py` – training loop
 - `source/extensions/orbit.surgical.tasks/orbit/surgical/tasks/surgical/handover/handover_env_cfg.py` – custom dual-arm needle handover environment config
-- `source/extensions/orbit.surgical.tasks/orbit/surgical/tasks/surgical/handover/handover_env_cfg.py` – RL policy architecture has three files:
+- `source/extensions/orbit.surgical.tasks/orbit/surgical/tasks/surgical/handover/handover_env_cfg.py` – RL policy architecture has three files:  
 .
-├── `observations.py`: observation space
-├── `rewards.py`: reward function(s)
-└── `terminations.py`: termination conditions
+├── `observations.py`: observation space  
+├── `rewards.py`: reward function(s)  
+└── `terminations.py`: termination conditions  
 
 ---
 
