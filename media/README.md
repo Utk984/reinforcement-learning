@@ -25,13 +25,13 @@ Eventually, we started realizing that our dense reward function was not working 
 
 4. Holding the needle (somewhat)
    
-![So many tries4](media/hold_work.gif)
+![So many tries4](hold_work.gif)
 
 5. Keep trying, and you'll eventually succeed
 
-![So many tries5](media/triple_pickup.gif)
+![So many tries5](triple_pickup.gif)
 
 
 ### 3. Eventual Success (this was just our best result)
 
-![Success](media/work_demo.gif)
+![Success](work_demo.gif)
