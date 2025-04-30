@@ -10,6 +10,14 @@ We build upon the **Orbit Surgical** platform, which provides simulation and con
 
 ---
 
+## Media
+
+Media showcasing the performance of our RL model on the needle handover task can be found in the [Media directory](https://github.com/Utk984/reinforcement-learning/tree/main/media).
+
+The [`README.md`](https://github.com/Utk984/reinforcement-learning/tree/main/media/README.md) in the media directory contains a detailed description of the media files, including the training process and the performance of the RL model.
+
+---
+
 ## Usage
 
 To train the RL model for the needle handover task (exact command available in `train_handover.txt`):
