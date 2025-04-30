@@ -7,7 +7,7 @@
 
 ### 2. SO SO SO Many tries
 
-Initially, we saw lot of erratic movement so we tried implementing penalties to the action space and joint space. (We needn't say this but it didn't work).
+Initially, we saw lot of erratic movement so we tried implementing penalties to the action space and joint space. (needless to say it didn't work).
 
 1. Action Penalty --> arms freeze
 
