@@ -22,6 +22,9 @@ gym.register(
     kwargs={
         "env_cfg_entry_point": joint_pos_env_cfg.NeedleHandoverEnvCfg,
         "rsl_rl_cfg_entry_point": agents.rsl_rl_cfg.HandoverNeedlePPORunnerCfg,
+        "rsl_rl_sac_cfg_entry_point": agents.rsl_rl_sac_cfg.HandoverNeedleSACRunnerCfg,
+        "sb3_cfg_entry_point": agents.sb3_ppo_cfg,
+        "sb3_sac_cfg_entry_point": agents.sb3_sac_cfg,
     },
     disable_env_checker=True,
 )
@@ -32,26 +35,6 @@ gym.register(
     kwargs={
         "env_cfg_entry_point": joint_pos_env_cfg.NeedleHandoverEnvCfg_PLAY,
         "rsl_rl_cfg_entry_point": agents.rsl_rl_cfg.HandoverNeedlePPORunnerCfg,
-    },
-    disable_env_checker=True,
-)
-# TESTING SAC
-gym.register(
-    id="Isaac-Handover-Needle-Dual-PSM-SAC-v0",
-    entry_point="omni.isaac.lab.envs:ManagerBasedRLEnv",
-    kwargs={
-        "env_cfg_entry_point": joint_pos_env_cfg.NeedleHandoverEnvCfg,
-        "rsl_rl_sac_cfg_entry_point": agents.rsl_rl_sac_cfg.HandoverNeedleSACRunnerCfg,
-    },
-    disable_env_checker=True,
-)
-# TESTING SAC
-gym.register(
-    id="Isaac-Handover-Needle-Dual-PSM-Play-SAC-v0",
-    entry_point="omni.isaac.lab.envs:ManagerBasedRLEnv",
-    kwargs={
-        "env_cfg_entry_point": joint_pos_env_cfg.NeedleHandoverEnvCfg_PLAY,
-        "rsl_rl_sac_cfg_entry_point": agents.rsl_rl_sac_cfg.HandoverNeedleSACRunnerCfg,
     },
     disable_env_checker=True,
 )
@@ -79,26 +62,6 @@ gym.register(
     },
     disable_env_checker=True,
 )
-# TESTING SAC
-gym.register(
-    id="Isaac-Handover-Needle-Dual-PSM-IK-Abs-SAC-v0",
-    entry_point="omni.isaac.lab.envs:ManagerBasedRLEnv",
-    kwargs={
-        "env_cfg_entry_point": ik_abs_env_cfg.NeedleHandoverEnvCfg,
-        "rsl_rl_sac_cfg_entry_point": agents.rsl_rl_sac_cfg.HandoverNeedleSACRunnerCfg,
-    },
-    disable_env_checker=True,
-)
-# TESTING SAC
-gym.register(
-    id="Isaac-Handover-Needle-Dual-PSM-IK-Abs-Play-SAC-v0",
-    entry_point="omni.isaac.lab.envs:ManagerBasedRLEnv",
-    kwargs={
-        "env_cfg_entry_point": ik_abs_env_cfg.NeedleHandoverEnvCfg_PLAY,
-        "rsl_rl_sac_cfg_entry_point": agents.rsl_rl_sac_cfg.HandoverNeedleSACRunnerCfg,
-    },
-    disable_env_checker=True,
-)
 
 ##
 # Inverse Kinematics - Relative Pose Control
@@ -123,23 +86,67 @@ gym.register(
     },
     disable_env_checker=True,
 )
-# TESTING SAC
+
+# SAC versions
+gym.register(
+    id="Isaac-Handover-Needle-Dual-PSM-SAC-v0",
+    entry_point="omni.isaac.lab.envs:ManagerBasedRLEnv",
+    kwargs={
+        "env_cfg_entry_point": joint_pos_env_cfg.NeedleHandoverEnvCfg,
+        # "rsl_rl_cfg_entry_point": agents.rsl_rl_sac_cfg.HandoverNeedleSACRunnerCfg,
+        "rsl_rl_sac_cfg_entry_point": agents.rsl_rl_sac_cfg.HandoverNeedleSACRunnerCfg,
+    },
+    disable_env_checker=True,
+)
+
+gym.register(
+    id="Isaac-Handover-Needle-Dual-PSM-SAC-Play-v0",
+    entry_point="omni.isaac.lab.envs:ManagerBasedRLEnv",
+    kwargs={
+        "env_cfg_entry_point": joint_pos_env_cfg.NeedleHandoverEnvCfg_PLAY,
+        "rsl_rl_cfg_entry_point": agents.rsl_rl_sac_cfg.HandoverNeedleSACRunnerCfg,
+    },
+    disable_env_checker=True,
+)
+
+# SAC IK Absolute control versions
+gym.register(
+    id="Isaac-Handover-Needle-Dual-PSM-IK-Abs-SAC-v0",
+    entry_point="omni.isaac.lab.envs:ManagerBasedRLEnv",
+    kwargs={
+        "env_cfg_entry_point": ik_abs_env_cfg.NeedleHandoverEnvCfg,
+        "rsl_rl_cfg_entry_point": agents.rsl_rl_sac_cfg.HandoverNeedleSACRunnerCfg,
+    },
+    disable_env_checker=True,
+)
+
+gym.register(
+    id="Isaac-Handover-Needle-Dual-PSM-IK-Abs-SAC-Play-v0",
+    entry_point="omni.isaac.lab.envs:ManagerBasedRLEnv",
+    kwargs={
+        "env_cfg_entry_point": ik_abs_env_cfg.NeedleHandoverEnvCfg_PLAY,
+        "rsl_rl_cfg_entry_point": agents.rsl_rl_sac_cfg.HandoverNeedleSACRunnerCfg,
+    },
+    disable_env_checker=True,
+)
+
+# SAC IK Relative control versions
 gym.register(
     id="Isaac-Handover-Needle-Dual-PSM-IK-Rel-SAC-v0",
     entry_point="omni.isaac.lab.envs:ManagerBasedRLEnv",
     kwargs={
         "env_cfg_entry_point": ik_rel_env_cfg.NeedleHandoverEnvCfg,
-        "rsl_rl_sac_cfg_entry_point": agents.rsl_rl_sac_cfg.HandoverNeedleSACRunnerCfg,
+        "rsl_rl_cfg_entry_point": agents.rsl_rl_sac_cfg.HandoverNeedleSACRunnerCfg,
     },
     disable_env_checker=True,
 )
-# TESTING SAC
+
 gym.register(
-    id="Isaac-Handover-Needle-Dual-PSM-IK-Rel-Play-SAC-v0",
+    id="Isaac-Handover-Needle-Dual-PSM-IK-Rel-SAC-Play-v0",
     entry_point="omni.isaac.lab.envs:ManagerBasedRLEnv",
     kwargs={
         "env_cfg_entry_point": ik_rel_env_cfg.NeedleHandoverEnvCfg_PLAY,
-        "rsl_rl_sac_cfg_entry_point": agents.rsl_rl_sac_cfg.HandoverNeedleSACRunnerCfg,
+        "rsl_rl_cfg_entry_point": agents.rsl_rl_sac_cfg.HandoverNeedleSACRunnerCfg,
     },
     disable_env_checker=True,
 )

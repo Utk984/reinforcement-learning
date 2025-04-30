@@ -1,0 +1,20 @@
+# PPO config for Isaac Lab Handover Needle Task (Python version)
+sb3_ppo_cfg = dict(
+    seed=42,
+    policy='MlpPolicy',
+    n_timesteps=16384000,
+    n_steps=64,
+    batch_size=192,
+    gae_lambda=0.95,
+    gamma=0.99,
+    n_epochs=8,
+    ent_coef=0.00,
+    vf_coef=0.0001,
+    learning_rate=3e-4,
+    clip_range=0.2,
+    policy_kwargs="dict(activation_fn=nn.ELU, net_arch=[32, 32, dict(pi=[256, 128, 64], vf=[256, 128, 64])])",
+    normalize_input=True,
+    normalize_value=True,
+    clip_obs=5,
+    verbose=1,
+)

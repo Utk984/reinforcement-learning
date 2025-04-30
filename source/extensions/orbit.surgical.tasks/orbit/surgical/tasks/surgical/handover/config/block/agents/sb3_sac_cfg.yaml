@@ -1,0 +1,19 @@
+# Reference: https://stable-baselines3.readthedocs.io/en/master/modules/sac.html
+# Default SAC config for Isaac Lab Handover Block Task
+seed: 42
+policy: 'MlpPolicy'
+n_timesteps: 2000000
+train_freq: 64
+batch_size: 256
+learning_starts: 10000
+buffer_size: 1000000
+gamma: 0.99
+tau: 0.005
+learning_rate: !!float 3e-4
+ent_coef: 'auto'
+target_update_interval: 1
+policy_kwargs: "dict(activation_fn=nn.ELU, net_arch=[256, 128, 64])"
+normalize_input: True
+normalize_value: True
+clip_obs: 5
+verbose: 1
