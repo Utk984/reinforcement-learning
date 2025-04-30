@@ -1,13 +1,9 @@
-# rewards_enhanced.py
-# Copyright (c) 2024, The ORBIT-Surgical Project Developers.
-# All rights reserved.
-# SPDX-License-Identifier: BSD-3-Clause
-
 from __future__ import annotations
 
 import torch
-from omni.isaac.lab.managers import SceneEntityCfg
 from typing import TYPE_CHECKING
+
+from omni.isaac.lab.managers import SceneEntityCfg
 
 if TYPE_CHECKING:
     from omni.isaac.lab.envs import ManagerBasedRLEnv

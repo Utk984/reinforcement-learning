@@ -1,13 +1,9 @@
-# rewards.py
-# Copyright (c) 2024, The ORBIT-Surgical Project Developers.
-# All rights reserved.
-# SPDX-License-Identifier: BSD-3-Clause
-
 from __future__ import annotations
 
 import torch
-from omni.isaac.lab.managers import SceneEntityCfg
 from typing import TYPE_CHECKING
+
+from omni.isaac.lab.managers import SceneEntityCfg
 
 if TYPE_CHECKING:
     from omni.isaac.lab.envs import ManagerBasedRLEnv
@@ -99,9 +95,9 @@ def needle_stability(env: ManagerBasedRLEnv, object_cfg: SceneEntityCfg) -> torc
     angular_vel = env.scene[object_cfg.name].data.root_ang_vel_w
     return torch.exp(-torch.norm(angular_vel, dim=1))
 
-import torch
-from omni.isaac.lab.managers import SceneEntityCfg
-from .rewards import _update_hold_flags
+
+
+
 
 def ee_to_cube_distance_reward(
     env,
@@ -134,9 +130,9 @@ def ee_to_cube_distance_reward(
     return is_lifted.float() * shaped
 
 
-from omni.isaac.lab.utils.math import combine_frame_transforms
-import torch
+
 from omni.isaac.lab.managers import SceneEntityCfg
+
 
 def tip_to_pass_target_distance(
     env, 
@@ -156,8 +152,9 @@ def tip_to_pass_target_distance(
     dist = torch.norm(tip_pos - tgt_pos, dim=1)          # (N,)
     return 1.0 - torch.tanh(dist / std)
 
-import torch
+
 from omni.isaac.lab.managers import SceneEntityCfg
+
 
 def needle_to_cube_distance_reward(
     env,

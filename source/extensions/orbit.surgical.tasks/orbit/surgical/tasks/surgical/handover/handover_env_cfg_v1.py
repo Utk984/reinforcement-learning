@@ -1,10 +1,5 @@
-# Copyright (c) 2024, The ORBIT-Surgical Project Developers.
-# All rights reserved.
-#
-# SPDX-License-Identifier: BSD-3-Clause
-
 from dataclasses import MISSING
-import torch
+
 from orbit.surgical.assets import ORBITSURGICAL_ASSETS_DATA_DIR
 
 import omni.isaac.lab.sim as sim_utils
@@ -21,8 +16,7 @@ from omni.isaac.lab.scene import InteractiveSceneCfg
 from omni.isaac.lab.sensors.frame_transformer.frame_transformer_cfg import FrameTransformerCfg
 from omni.isaac.lab.sim.spawners.from_files.from_files_cfg import GroundPlaneCfg, UsdFileCfg
 from omni.isaac.lab.utils import configclass
-import inspect
-import time
+
 from . import mdp
 
 ##
