@@ -34,11 +34,13 @@ ${IsaacLab_PATH}/isaaclab.sh -p source/standalone/workflows/rsl_rl/train.py     
 
 Here are the key components of our implementation:
 - `source/standalone/workflows/rsl_rl/train.py` – training loop
+  
 - `source/extensions/orbit.surgical.tasks/orbit/surgical/tasks/surgical/handover/handover_env_cfg.py` – custom dual-arm needle handover environment config
-- `source/extensions/orbit.surgical.tasks/orbit/surgical/tasks/surgical/handover/mdp/` – RL policy architecture has three files:  
-├─ `observations.py`: observation space  
-├─ `rewards.py`: reward function(s)  
-└─ `terminations.py`: termination conditions  
+  
+- `source/extensions/orbit.surgical.tasks/orbit/surgical/tasks/surgical/handover/mdp/` – RL policy architecture has three files:
+  - `observations.py`: observation space
+  - `rewards.py`: reward function(s)
+  - `terminations.py`: termination conditions  
 
 Code can be found exactly [here](https://github.com/Utk984/reinforcement-learning/tree/main/source/extensions/orbit.surgical.tasks/orbit/surgical/tasks/surgical/handover).
 
