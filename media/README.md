@@ -1,37 +1,60 @@
-# Journey of training through multimedia
+# RL Needle Handover — Training Journey
+
+This repository documents our journey of training a reinforcement learning agent for a surgical needle handover task using Isaac Lab + ORBIT-Surgical. We started with no demonstrations or reference poses—only raw reward signals, trial and error, and a lot of debugging.
+
+---
+
+## Methodology
+
+We began with **dense rewards**:
+- Rewards for approaching the needle
+- Penalties on large actions or joint velocities
+- Distance shaping and time-based discouragements
+
+However, these led to unstable learning and unintended behavior (freezing, flailing, balancing without grasping).
+
+We later switched to a **sparse reward scheme**:
+- **Positive** for lifting the needle with a closed gripper
+- **Shaping penalty** that decreased as the needle approached a central goal zone
+
+---
+
+## 📈 Training Timeline
 
 ### 1. Failure
 
+> Just chaotic exploration. No meaningful behavior.  
 ![Fail](fail.gif)
 
+---
 
-### 2. SO SO SO Many tries
+### 2. Iteration & Debugging
 
-Initially, we saw a lot of erratic movement, so we tried implementing penalties in the action and joint spaces. (Needless to say, it didn't work.)
+> We tried various reward designs. Most failed. But each failure taught us something new.
 
-1. Action Penalty --> arms freeze
+- **Action penalty → Frozen arms**  
+  _Too much punishment for effort = inaction._  
+  ![Action Penalty](action_penalty.gif)
 
-![So many tries1](action_penalty.gif)
+- **Joint penalty → Locked joints**  
+  _Smoothness cost caused joints to stop moving altogether._  
+  ![Joint Penalty](joint_penalty.gif)
 
-2. Joint Penalty --> Joints freeze
+- **Gripper open/close penalty → Arm balances the needle**  
+  _Agent lifts the needle using contact dynamics, not grasp._  
+  ![Gripper Open](gripper_open_balance.gif)
 
-![So many tries2](joint_penalty.gif)
+- **Holding the needle (somewhat)**  
+  _Sparse reward begins working. Gripper closes and lifts._  
+  ![Hold](hold_work.gif)
 
-Eventually, we started realizing that our dense reward function was not working as expected. We had to change the reward function to a sparse reward function.
+- **Multiple attempts, one success**  
+  _Lots of noise, but needle eventually gets picked up._  
+  ![Triple Pickup](triple_pickup.gif)
 
-3. Gripper Open (but balances the needle)
-   
-![So many tries3](gripper_open_balance.gif)
+---
 
-4. Holding the needle (somewhat)
-   
-![So many tries4](hold_work.gif)
+### 3. Success
 
-5. Keep trying, and you'll eventually succeed
-
-![So many tries5](triple_pickup.gif)
-
-
-### 3. Eventual Success (this was just our best result)
-
+> Our best result: .  
 ![Success](work_demo.gif)
